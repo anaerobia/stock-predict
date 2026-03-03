@@ -5,11 +5,11 @@ Downloads historical stock data and predicts future prices using regression.
 Features interactive Plotly charts with hover-to-view price details.
 Compare up to 3 stocks, including S&P 500 index for market comparison.
 
-Usage: python stock_predictor.py <TICKER> [TICKER2] <YYYY-MM-DD> [--days DAYS] [--plot] [--sp500]
-       python stock_predictor.py NVDA 2026-03-15 --days 365 --plot
-       python stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot
-       python stock_predictor.py NVDA 2026-03-15 --sp500 --plot
-       python stock_predictor.py --demo
+Usage: python src/stock_predictor.py <TICKER> [TICKER2] <YYYY-MM-DD> [--days DAYS] [--plot] [--sp500]
+       python src/stock_predictor.py NVDA 2026-03-15 --days 365 --plot
+       python src/stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot
+       python src/stock_predictor.py NVDA 2026-03-15 --sp500 --plot
+       python src/stock_predictor.py --demo
 """
 
 import sys
@@ -412,12 +412,12 @@ def main() -> None:
         description='Predict stock price using regression analysis. Compare up to 3 stocks.',
         epilog=(
             'Examples:\n'
-            '  python stock_predictor.py NVDA 2026-03-15\n'
-            '  python stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot\n'
-            '  python stock_predictor.py NVDA 2026-03-15 --sp500 --plot\n'
-            '  python stock_predictor.py TSLA MSFT 2026-05-15 --days 500 --plot\n'
-            '  python stock_predictor.py MSFT 2026-06-01 --plot --visualize\n'
-            '  python stock_predictor.py --demo --sp500 --plot'
+            '  python src/stock_predictor.py NVDA 2026-03-15\n'
+            '  python src/stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot\n'
+            '  python src/stock_predictor.py NVDA 2026-03-15 --sp500 --plot\n'
+            '  python src/stock_predictor.py TSLA MSFT 2026-05-15 --days 500 --plot\n'
+            '  python src/stock_predictor.py MSFT 2026-06-01 --plot --visualize\n'
+            '  python src/stock_predictor.py --demo --sp500 --plot'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -456,9 +456,9 @@ def main() -> None:
             parser.print_help()
             print("\n❌ ERROR: Need at least TICKER and TARGET_DATE (or use --demo)")
             print("\nExamples:")
-            print("  python stock_predictor.py NVDA 2026-03-15")
-            print("  python stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot")
-            print("  python stock_predictor.py --demo")
+            print("  python src/stock_predictor.py NVDA 2026-03-15")
+            print("  python src/stock_predictor.py NVDA AAPL 2026-04-01 --days 730 --plot")
+            print("  python src/stock_predictor.py --demo")
             sys.exit(1)
 
         potential_tickers = args.inputs[:-1]

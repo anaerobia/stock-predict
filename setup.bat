@@ -43,13 +43,13 @@ echo Installation complete!
 echo ================================================
 echo.
 echo You can now run the predictor with any stock:
-echo   python stock_predictor.py AAPL 2026-03-15
-echo   python stock_predictor.py TSLA 2026-04-01 --days 730
+echo   python src/stock_predictor.py AAPL 2026-03-15
+echo   python src/stock_predictor.py TSLA 2026-04-01 --days 730
 echo.
 echo Or try demo mode:
-echo   python stock_predictor.py --demo
+echo   python src/stock_predictor.py --demo
 echo.
 echo Or run interactive examples:
-echo   python test_predictor.py
+echo   python tests/test_predictor.py
 echo.
 pause

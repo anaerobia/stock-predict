@@ -12,32 +12,32 @@ pip install yfinance scikit-learn pandas numpy
 
 ### Step 2: Download the Scripts
 
-Save `stock_predictor.py` and `test_predictor.py` to your computer.
+Save the `src/` and `tests/` directories to your computer.
 
 ## Quick Start
 
 ### Option 1: Demo Mode (Easiest)
 ```bash
-python stock_predictor.py --demo
+python src/stock_predictor.py --demo
 ```
 This predicts NVDA stock price 30 days from now with visualization.
 
 ### Option 2: Predict Any Stock
 ```bash
-python stock_predictor.py AAPL 2026-03-15
-python stock_predictor.py TSLA 2026-04-01 --days 730
+python src/stock_predictor.py AAPL 2026-03-15
+python src/stock_predictor.py TSLA 2026-04-01 --days 730
 ```
 
 ### Option 3: Run Interactive Examples
 ```bash
-python test_predictor.py
+python tests/test_predictor.py
 ```
 
 ## Usage
 
 ### Basic Syntax
 ```bash
-python stock_predictor.py <TICKER> <YYYY-MM-DD> [OPTIONS]
+python src/stock_predictor.py <TICKER> <YYYY-MM-DD> [OPTIONS]
 ```
 
 **Required Arguments:**
@@ -54,31 +54,31 @@ python stock_predictor.py <TICKER> <YYYY-MM-DD> [OPTIONS]
 ### Different Stocks
 ```bash
 # Apple
-python stock_predictor.py AAPL 2026-03-15
+python src/stock_predictor.py AAPL 2026-03-15
 
 # Tesla with visualization
-python stock_predictor.py TSLA 2026-04-01 --visualize
+python src/stock_predictor.py TSLA 2026-04-01 --visualize
 
 # Microsoft with 2 years of data
-python stock_predictor.py MSFT 2026-03-20 --days 730
+python src/stock_predictor.py MSFT 2026-03-20 --days 730
 
 # Google with 500 days and visualization
-python stock_predictor.py GOOGL 2026-05-01 --days 500 --visualize
+python src/stock_predictor.py GOOGL 2026-05-01 --days 500 --visualize
 ```
 
 ### Using Different Historical Periods
 ```bash
 # 6 months of data
-python stock_predictor.py AAPL 2026-03-15 --days 180
+python src/stock_predictor.py AAPL 2026-03-15 --days 180
 
 # 1 year (default)
-python stock_predictor.py AAPL 2026-03-15 --days 365
+python src/stock_predictor.py AAPL 2026-03-15 --days 365
 
 # 2 years
-python stock_predictor.py AAPL 2026-03-15 --days 730
+python src/stock_predictor.py AAPL 2026-03-15 --days 730
 
 # 5 years
-python stock_predictor.py AAPL 2026-03-15 --days 1825
+python src/stock_predictor.py AAPL 2026-03-15 --days 1825
 ```
 
 ## How It Works
@@ -177,7 +177,7 @@ The program includes comprehensive validation:
 
 ### Invalid Ticker Symbol
 ```bash
-$ python stock_predictor.py INVALIDTICKER 2026-03-15
+$ python src/stock_predictor.py INVALIDTICKER 2026-03-15
 
 Step 1: Validating ticker symbol...
 ❌ Ticker 'INVALIDTICKER' not found or has no data
@@ -190,7 +190,7 @@ Please check:
 
 ### Too Many Days
 ```bash
-$ python stock_predictor.py AAPL 2026-03-15 --days 50000
+$ python src/stock_predictor.py AAPL 2026-03-15 --days 50000
 
 Step 2: Validating historical data period...
 ❌ Number of days prior (50000) is too large. Maximum is 9125 days (~25 years).
@@ -203,7 +203,7 @@ Recommendations:
 
 ### Too Few Days
 ```bash
-$ python stock_predictor.py AAPL 2026-03-15 --days 30
+$ python src/stock_predictor.py AAPL 2026-03-15 --days 30
 
 Step 2: Validating historical data period...
 ❌ Number of days prior (30) is too small. Minimum is 60 days for meaningful predictions.
@@ -216,7 +216,7 @@ Recommendations:
 
 ### Insufficient Historical Data
 ```bash
-$ python stock_predictor.py NEWERCOMPANY 2026-03-15 --days 3650
+$ python src/stock_predictor.py NEWERCOMPANY 2026-03-15 --days 3650
 
 Step 2: Validating historical data period...
 ❌ Ticker 'NEWERCOMPANY' only has 450 days of historical data available, 
@@ -225,7 +225,7 @@ but 3650 days were requested. Please use a smaller value.
 
 ### Target Date in Past
 ```bash
-$ python stock_predictor.py AAPL 2020-01-01
+$ python src/stock_predictor.py AAPL 2020-01-01
 
 ❌ ERROR: Target date must be in the future
 Target date: 2020-01-01

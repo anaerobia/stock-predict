@@ -36,35 +36,35 @@ def main():
     examples = [
         {
             "name": "Example 1: Demo Mode (NVDA, 30 days ahead)",
-            "cmd": "python stock_predictor.py --demo"
+            "cmd": "python src/stock_predictor.py --demo"
         },
         {
             "name": "Example 2: Apple Stock Prediction (60 days)",
-            "cmd": f"python stock_predictor.py AAPL {future_60}"
+            "cmd": f"python src/stock_predictor.py AAPL {future_60}"
         },
         {
             "name": "Example 3: Tesla with Visualization (90 days)",
-            "cmd": f"python stock_predictor.py TSLA {future_90} --visualize"
+            "cmd": f"python src/stock_predictor.py TSLA {future_90} --visualize"
         },
         {
             "name": "Example 4: Microsoft with 2 years of data",
-            "cmd": f"python stock_predictor.py MSFT {future_30} --days 730"
+            "cmd": f"python src/stock_predictor.py MSFT {future_30} --days 730"
         },
         {
             "name": "Example 5: Google with 500 days of data + Visualization",
-            "cmd": f"python stock_predictor.py GOOGL {future_60} --days 500 --visualize"
+            "cmd": f"python src/stock_predictor.py GOOGL {future_60} --days 500 --visualize"
         },
         {
             "name": "Example 6: Test Invalid Ticker (should show error)",
-            "cmd": f"python stock_predictor.py INVALIDTICKER {future_30}"
+            "cmd": f"python src/stock_predictor.py INVALIDTICKER {future_30}"
         },
         {
             "name": "Example 7: Test Too Many Days (should show error)",
-            "cmd": f"python stock_predictor.py AAPL {future_30} --days 50000"
+            "cmd": f"python src/stock_predictor.py AAPL {future_30} --days 50000"
         },
         {
             "name": "Example 8: Test Too Few Days (should show error)",
-            "cmd": f"python stock_predictor.py AAPL {future_30} --days 30"
+            "cmd": f"python src/stock_predictor.py AAPL {future_30} --days 30"
         }
     ]
     

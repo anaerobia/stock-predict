@@ -2,7 +2,7 @@
 
 ## Basic Usage
 ```bash
-python stock_predictor.py <TICKER> <DATE> [OPTIONS]
+python src/stock_predictor.py <TICKER> <DATE> [OPTIONS]
 ```
 
 ## Examples
@@ -10,28 +10,28 @@ python stock_predictor.py <TICKER> <DATE> [OPTIONS]
 ### Popular Stocks
 ```bash
 # Tech Giants
-python stock_predictor.py AAPL 2026-03-15    # Apple
-python stock_predictor.py MSFT 2026-03-15    # Microsoft
-python stock_predictor.py GOOGL 2026-03-15   # Google
-python stock_predictor.py AMZN 2026-03-15    # Amazon
-python stock_predictor.py META 2026-03-15    # Meta/Facebook
+python src/stock_predictor.py AAPL 2026-03-15    # Apple
+python src/stock_predictor.py MSFT 2026-03-15    # Microsoft
+python src/stock_predictor.py GOOGL 2026-03-15   # Google
+python src/stock_predictor.py AMZN 2026-03-15    # Amazon
+python src/stock_predictor.py META 2026-03-15    # Meta/Facebook
 
 # AI & Semiconductors
-python stock_predictor.py NVDA 2026-03-15    # NVIDIA
-python stock_predictor.py AMD 2026-03-15     # AMD
-python stock_predictor.py INTC 2026-03-15    # Intel
-python stock_predictor.py TSM 2026-03-15     # Taiwan Semiconductor
+python src/stock_predictor.py NVDA 2026-03-15    # NVIDIA
+python src/stock_predictor.py AMD 2026-03-15     # AMD
+python src/stock_predictor.py INTC 2026-03-15    # Intel
+python src/stock_predictor.py TSM 2026-03-15     # Taiwan Semiconductor
 
 # Electric Vehicles
-python stock_predictor.py TSLA 2026-03-15    # Tesla
-python stock_predictor.py RIVN 2026-03-15    # Rivian
-python stock_predictor.py F 2026-03-15       # Ford
+python src/stock_predictor.py TSLA 2026-03-15    # Tesla
+python src/stock_predictor.py RIVN 2026-03-15    # Rivian
+python src/stock_predictor.py F 2026-03-15       # Ford
 
 # Other Popular
-python stock_predictor.py NFLX 2026-03-15    # Netflix
-python stock_predictor.py DIS 2026-03-15     # Disney
-python stock_predictor.py BA 2026-03-15      # Boeing
-python stock_predictor.py JPM 2026-03-15     # JP Morgan
+python src/stock_predictor.py NFLX 2026-03-15    # Netflix
+python src/stock_predictor.py DIS 2026-03-15     # Disney
+python src/stock_predictor.py BA 2026-03-15      # Boeing
+python src/stock_predictor.py JPM 2026-03-15     # JP Morgan
 ```
 
 ### Options
@@ -39,37 +39,37 @@ python stock_predictor.py JPM 2026-03-15     # JP Morgan
 #### Historical Period (--days)
 ```bash
 # Short term (3 months)
-python stock_predictor.py AAPL 2026-03-15 --days 90
+python src/stock_predictor.py AAPL 2026-03-15 --days 90
 
 # Medium term (1 year) - DEFAULT
-python stock_predictor.py AAPL 2026-03-15 --days 365
+python src/stock_predictor.py AAPL 2026-03-15 --days 365
 
 # Long term (2 years)
-python stock_predictor.py AAPL 2026-03-15 --days 730
+python src/stock_predictor.py AAPL 2026-03-15 --days 730
 
 # Very long term (5 years)
-python stock_predictor.py AAPL 2026-03-15 --days 1825
+python src/stock_predictor.py AAPL 2026-03-15 --days 1825
 ```
 
 #### Visualization (--visualize)
 ```bash
 # Show ASCII chart
-python stock_predictor.py TSLA 2026-04-01 --visualize
+python src/stock_predictor.py TSLA 2026-04-01 --visualize
 ```
 
 #### Demo Mode (--demo)
 ```bash
 # Quick test with NVDA, 30 days ahead
-python stock_predictor.py --demo
+python src/stock_predictor.py --demo
 ```
 
 ### Combined Options
 ```bash
 # Tesla with 2 years of data and visualization
-python stock_predictor.py TSLA 2026-04-01 --days 730 --visualize
+python src/stock_predictor.py TSLA 2026-04-01 --days 730 --visualize
 
 # Apple with 6 months of data
-python stock_predictor.py AAPL 2026-03-20 --days 180 --visualize
+python src/stock_predictor.py AAPL 2026-03-20 --days 180 --visualize
 ```
 
 ## Validation Limits
@@ -129,7 +129,7 @@ python stock_predictor.py AAPL 2026-03-20 --days 180 --visualize
 
 For a guided experience with multiple examples:
 ```bash
-python test_predictor.py
+python tests/test_predictor.py
 ```
 
 This provides 8 pre-configured examples including:
