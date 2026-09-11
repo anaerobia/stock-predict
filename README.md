@@ -268,24 +268,106 @@ For better predictions, consider:
 5. **Market regime detection**: Adjust predictions based on volatility patterns
 6. **Fundamental data**: Include earnings, P/E ratio, etc.
 
-## Important Disclaimer
+## Architecture
 
-⚠️ **This tool is for educational purposes only!**
+The application has two modes: a **standalone CLI** and a **full-stack web app** with an AI chatbot.
 
-Stock market predictions are extremely uncertain. Many factors influence stock prices:
-- Economic conditions
-- Company performance
-- Market sentiment
-- Global events
-- Regulatory changes
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Browser (localhost:5173)                      │
+│                                                                     │
+│  ┌──────────────────────────────────┐  ┌─────────────────────────┐  │
+│  │         Plotly.js Chart          │  │      Chat Panel         │  │
+│  │                                  │  │                         │  │
+│  │  - Historical prices (lines)     │  │  User: "Add TSLA"      │  │
+│  │  - 7-day & 30-day MA (dashed)    │  │                         │  │
+│  │  - Prediction markers (stars)    │  │  Bot: "Adding TSLA..."  │  │
+│  │  - Projection lines (dotted)     │  │  [streaming response]   │  │
+│  │  - Range slider for zoom         │  │                         │  │
+│  │                                  │  │  ┌───────────────────┐  │  │
+│  │  Updates via chart_update events │  │  │ Send message...   │  │  │
+│  └──────────────────────────────────┘  │  └───────────────────┘  │  │
+│              65% width                 │       35% width         │  │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+                     SSE Stream │ POST /api/chat
+                   (text_delta, │ chart_update,
+                    tool_start, │ done)
+                                │
+┌───────────────────────────────┼─────────────────────────────────────┐
+│              FastAPI Backend (localhost:8000)                        │
+│                               │                                     │
+│  ┌────────────────────────────▼──────────────────────────────────┐  │
+│  │                   Claude Tool-Use Loop                        │  │
+│  │                                                               │  │
+│  │  1. Receive user message                                      │  │
+│  │  2. Stream to Claude (claude-sonnet-4-6)                      │  │
+│  │  3. Claude decides which tool to call                         │  │
+│  │  4. Execute tool, return result to Claude                     │  │
+│  │  5. Claude generates natural language response                │  │
+│  │  6. Stream everything back as SSE events                      │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│           │                                                         │
+│           │ Tool calls                                              │
+│           ▼                                                         │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │              stock_predictor.py (shared core)                 │  │
+│  │                                                               │  │
+│  │  fetch_stock_data ──► create_features ──► train_model         │  │
+│  │        │                                       │              │  │
+│  │   Yahoo Finance                        predict_future_price   │  │
+│  │   (yfinance API)                               │              │  │
+│  │                                          Return prediction    │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  Endpoints:                                                         │
+│    GET  /api/defaults  — startup stocks (NVDA, AAPL)                │
+│    POST /api/chat      — SSE streaming chat                         │
+│    GET  /api/health    — liveness check                             │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-**Never make investment decisions based solely on algorithmic predictions.** Always:
-- Consult with qualified financial advisors
-- Do comprehensive research
-- Understand your risk tolerance
-- Diversify your investments
+### Frontend (React + Vite)
 
-Past performance does not guarantee future results.
+| Component | Role |
+|-----------|------|
+| `App.jsx` | Root layout, manages `stocks` state object, loads defaults on mount |
+| `StockChart.jsx` | Renders Plotly.js chart with per-stock traces; uses `ResizeObserver` for responsive resizing |
+| `ChatPanel.jsx` | Chat UI with streaming text, tool activity indicators, and keyboard shortcuts |
+| `api.js` | `fetchDefaults()` and `streamChat()` async generator for SSE consumption |
+
+### Backend (FastAPI)
+
+| Module | Role |
+|--------|------|
+| `server.py` | FastAPI app with SSE streaming chat endpoint; runs Claude tool-use loop |
+| `stock_predictor.py` | Core prediction pipeline shared by CLI, web backend, and agent team |
+| `agent_team.py` | Standalone multi-agent pipeline (orchestrator + risk + report agents) |
+
+### Communication Flow
+
+1. **On startup**: Frontend calls `GET /api/defaults` to load NVDA and AAPL chart data
+2. **Chat interaction**: Frontend sends `POST /api/chat` with the message history
+3. **SSE stream**: Backend streams events back in real-time:
+   - `text_delta` — Claude's response text (streamed token by token)
+   - `tool_start` — indicates a tool is being called (triggers loading indicator)
+   - `chart_update` — contains full stock data payload (triggers chart re-render)
+   - `tool_error` — tool execution failed
+   - `done` — response complete
+4. **Tool execution**: Claude decides which tools to call (`add_stock`, `remove_stock`, `clear_chart`, `get_stock_price`), the backend executes them against `stock_predictor.py`, and feeds results back to Claude for interpretation
+
+### Running the Web App
+
+```bash
+# Terminal 1 — Backend
+pip install fastapi uvicorn anthropic
+cd src && uvicorn server:app --reload --port 8000
+
+# Terminal 2 — Frontend
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:5173. Default stocks load automatically; use the chatbot to add more.
 
 ## Troubleshooting
 
