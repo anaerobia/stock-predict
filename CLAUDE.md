@@ -22,10 +22,24 @@ direct push to `main` skips it entirely and gets no review.
 ```bash
 bash setup.sh
 # or manually:
-pip install yfinance scikit-learn pandas numpy plotly anthropic
+pip install yfinance scikit-learn pandas numpy plotly anthropic fastapi uvicorn
 ```
 
-## Running the Predictor
+## Running the Web App
+
+Requires two terminals and `ANTHROPIC_API_KEY` in the environment.
+
+```bash
+# Terminal 1 — Backend (FastAPI + Claude)
+cd src && uvicorn server:app --reload --port 8000
+
+# Terminal 2 — Frontend (React + Vite)
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:5173. NVDA and AAPL load by default; use the chatbot to add/remove stocks, get predictions, etc.
+
+## Running the CLI Predictor
 
 ```bash
 # Demo mode (NVDA, 30 days ahead)
@@ -75,6 +89,12 @@ Pipeline: `fetch_stock_data` → `create_features` → `train_model` → `predic
 - **Model**: LinearRegression with StandardScaler. Uses an honest 80/20 chronological train/test split for reported metrics, then refits on the full dataset for the final prediction.
 - **Visualization**: `--visualize` prints an ASCII bar chart; `--plot` opens an interactive Plotly chart with hover, zoom, and a range slider. Supports up to 3 tickers simultaneously.
 - **Limits**: `--days` must be 60–9125. The last positional arg is always the target date (YYYY-MM-DD); all preceding positional args are ticker symbols.
+
+### `src/server.py` + `frontend/` — Web app with AI chatbot
+
+- **Backend** (`server.py`): FastAPI app with SSE streaming. Runs a Claude tool-use loop with 4 tools: `add_stock`, `remove_stock`, `clear_chart`, `get_stock_price`. `GET /api/defaults` pre-loads NVDA + AAPL on startup. System prompt is built dynamically via `_build_system()` to inject today's date.
+- **Frontend** (React + Vite): Split-pane layout — Plotly.js chart (left, 65%) and chat panel (right, 35%). `StockChart.jsx` uses `Plotly.newPlot`/`Plotly.react` directly (not react-plotly.js) with a `ResizeObserver` for responsive sizing. `ChatPanel.jsx` consumes SSE via an async generator in `api.js`.
+- **SSE events**: `text_delta` (streamed text), `tool_start` (loading indicator), `chart_update` (add/remove/clear stock data), `tool_error`, `done`.
 
 ### `src/agent_team.py` — Multi-agent Claude pipeline
 
