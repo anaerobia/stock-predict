@@ -57,18 +57,25 @@ DEFAULT_TICKERS = ["NVDA", "AAPL"]
 # Claude system prompt + tools
 # ---------------------------------------------------------------------------
 
-SYSTEM = """You are a helpful stock market assistant with access to real-time stock data tools.
-
-You can:
-- Add stocks to an interactive chart with price predictions (add_stock)
-- Remove stocks from the chart (remove_stock)
-- Clear all stocks from the chart (clear_chart)
-- Look up a stock's current or predicted price (get_stock_price)
-
-When a user mentions a stock ticker or asks for a prediction, call the appropriate tool immediately.
-If no target date is specified for a prediction, default to 30 days from today.
-Always interpret results in plain language and note that predictions are educational model estimates,
-not financial advice. Keep responses concise."""
+def _build_system() -> str:
+    today = datetime.now().strftime("%Y-%m-%d")
+    default_target = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+    return (
+        f"You are a helpful stock market assistant with access to real-time stock data tools.\n"
+        f"\n"
+        f"Today's date is {today}.\n"
+        f"\n"
+        f"You can:\n"
+        f"- Add stocks to an interactive chart with price predictions (add_stock)\n"
+        f"- Remove stocks from the chart (remove_stock)\n"
+        f"- Clear all stocks from the chart (clear_chart)\n"
+        f"- Look up a stock's current or predicted price (get_stock_price)\n"
+        f"\n"
+        f"When a user mentions a stock ticker or asks for a prediction, call the appropriate tool immediately.\n"
+        f"If no target date is specified for a prediction, use {default_target} (30 days from today).\n"
+        f"Always interpret results in plain language and note that predictions are educational model estimates,\n"
+        f"not financial advice. Keep responses concise."
+    )
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -243,7 +250,7 @@ async def _stream_chat(messages: list[dict[str, Any]]) -> AsyncGenerator[str, No
         async with _client.messages.stream(
             model=MODEL,
             max_tokens=1024,
-            system=SYSTEM,
+            system=_build_system(),
             tools=TOOLS,
             messages=history,
         ) as stream:
