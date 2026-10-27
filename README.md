@@ -2,6 +2,10 @@
 
 A Python program that downloads historical stock data from Yahoo Finance, trains a regression model, and predicts future stock prices for any publicly traded stock.
 
+> **Also in this repo: [Pokerbot](pokerbot/README.md)** – a heads-up No-Limit
+> Hold'em engine, a ladder of bots and a five-chapter guide to building your
+> own (`python -m pokerbot play`). Pure Python, no dependencies.
+
 ## Installation
 
 ### Step 1: Install Required Packages
