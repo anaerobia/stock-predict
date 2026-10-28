@@ -60,7 +60,11 @@ jobs:
             exit 1
           fi
 
-          REVIEW_TEXT=$(jq -r '.result // empty' "$RESULT_FILE")
+          # claude-code-action writes an array of messages; the final answer is
+          # in the last element with "type": "result". Accept a single object too.
+          REVIEW_TEXT=$(jq -r '
+            if type == "array" then (map(select(.type == "result")) | last | .result)
+            else .result end // empty' "$RESULT_FILE")
           if [ -z "$REVIEW_TEXT" ]; then
             echo "Empty review text — failing closed."
             exit 1
