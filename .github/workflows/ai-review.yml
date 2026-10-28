@@ -22,6 +22,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      # A new push must not ride on an approval of older code: disarm before
+      # reviewing, and only re-arm after this run approves.
+      - name: Disarm auto-merge until this run approves
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR_NUMBER" --disable-auto || true
+
+      # The review step has no shell, so hand it the diff as a file it can Read.
+      - name: Write PR diff for the reviewer
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git diff "origin/${BASE_REF}...HEAD" > pr-review.diff
+
       - name: Run Claude review
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -32,6 +46,9 @@ jobs:
           prompt: |
             Review the diff in this pull request for correctness bugs, security
             issues, and regressions. Ignore style preferences.
+
+            The full diff is in the file `pr-review.diff` at the repository
+            root. Read it first, then read the changed files for context.
 
             Do not use any tools to post this review anywhere - just write it
             as your final answer. A later, non-AI step in this workflow posts
@@ -58,9 +75,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Fail closed: unless this run ends in a successful APPROVE, disarm any
-          # auto-merge armed by an earlier run. The EXIT trap also covers commands
-          # that fail under `set -e` (bad JSON, a failed comment post, ...).
+          # Fail closed: unless this run arms auto-merge after a successful
+          # approval, disarm on exit (backs up the disarm step before the review).
+          # The EXIT trap also covers commands that fail under `set -e`.
           APPROVED=0
           disarm_unless_approved() {
             if [[ "$APPROVED" != 1 ]]; then
@@ -88,8 +105,10 @@ jobs:
 
           gh pr comment "$PR_NUMBER" --body "$REVIEW_TEXT"
 
-          # `|| true`: with no verdict line grep fails; treat it as "no verdict", not a crash.
-          VERDICT=$(printf '%s\n' "$REVIEW_TEXT" | grep -E '^REVIEW_RESULT: (APPROVE|CHANGES_NEEDED)$' | tail -n1 || true)
+          # The verdict must be the last non-empty line; anything else counts as no verdict.
+          # `|| true`: a non-matching grep must not end the script under `set -e`.
+          VERDICT=$(printf '%s\n' "$REVIEW_TEXT" | sed -e 's/[[:space:]]*$//' | grep -v '^$' | tail -n1 \
+            | grep -E '^REVIEW_RESULT: (APPROVE|CHANGES_NEEDED)$' || true)
 
           if [[ "$VERDICT" == "REVIEW_RESULT: APPROVE" ]]; then
             if [[ "$AUTO_MERGE_ENABLED" == "true" && "$AUTHOR_ASSOCIATION" =~ ^(OWNER|MEMBER|COLLABORATOR)$ ]]; then
@@ -100,7 +119,6 @@ jobs:
                 echo "Approve call failed (repo may need 'Allow GitHub Actions to approve pull requests' enabled under Settings > Actions). Leaving PR unmerged."
               fi
             else
-              APPROVED=1
               echo "Approved by review, but auto-merge is off or author isn't trusted — leaving for manual merge."
             fi
           elif [[ -z "$VERDICT" ]]; then
