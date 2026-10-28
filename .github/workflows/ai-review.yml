@@ -58,16 +58,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Anything other than an explicit APPROVE must disarm auto-merge, so a
-          # previous approval can't merge a PR whose latest review failed.
-          disarm() {
-            echo "$1 — disarming any existing auto-merge on this PR."
-            gh pr merge "$PR_NUMBER" --disable-auto || true
+          # Fail closed: unless this run ends in a successful APPROVE, disarm any
+          # auto-merge armed by an earlier run. The EXIT trap also covers commands
+          # that fail under `set -e` (bad JSON, a failed comment post, ...).
+          APPROVED=0
+          disarm_unless_approved() {
+            if [[ "$APPROVED" != 1 ]]; then
+              echo "Not approved — disarming any existing auto-merge on this PR."
+              gh pr merge "$PR_NUMBER" --disable-auto || true
+            fi
           }
+          trap disarm_unless_approved EXIT
 
           RESULT_FILE="${EXECUTION_FILE:-/home/runner/work/_temp/claude-execution-output.json}"
           if [ ! -f "$RESULT_FILE" ]; then
-            disarm "No Claude output file found at $RESULT_FILE"
+            echo "No Claude output file found at $RESULT_FILE — failing closed."
             exit 1
           fi
 
@@ -77,27 +82,30 @@ jobs:
             if type == "array" then (map(select(.type == "result")) | last | .result)
             else .result end // empty' "$RESULT_FILE")
           if [ -z "$REVIEW_TEXT" ]; then
-            disarm "Empty review text"
+            echo "Empty review text — failing closed."
             exit 1
           fi
 
           gh pr comment "$PR_NUMBER" --body "$REVIEW_TEXT"
 
-          # `|| true`: no verdict line makes grep fail, which must not end the script before disarm.
+          # `|| true`: with no verdict line grep fails; treat it as "no verdict", not a crash.
           VERDICT=$(printf '%s\n' "$REVIEW_TEXT" | grep -E '^REVIEW_RESULT: (APPROVE|CHANGES_NEEDED)$' | tail -n1 || true)
 
           if [[ "$VERDICT" == "REVIEW_RESULT: APPROVE" ]]; then
             if [[ "$AUTO_MERGE_ENABLED" == "true" && "$AUTHOR_ASSOCIATION" =~ ^(OWNER|MEMBER|COLLABORATOR)$ ]]; then
-              gh pr review "$PR_NUMBER" --approve \
-                --body "Reviewed by Claude — no blocking issues found." \
-                || echo "Approve call failed (repo may need 'Allow GitHub Actions to approve pull requests' enabled under Settings > Actions). Leaving PR unmerged."
-              gh pr merge "$PR_NUMBER" --auto --squash || true
+              if gh pr review "$PR_NUMBER" --approve --body "Reviewed by Claude — no blocking issues found."; then
+                APPROVED=1
+                gh pr merge "$PR_NUMBER" --auto --squash || true
+              else
+                echo "Approve call failed (repo may need 'Allow GitHub Actions to approve pull requests' enabled under Settings > Actions). Leaving PR unmerged."
+              fi
             else
+              APPROVED=1
               echo "Approved by review, but auto-merge is off or author isn't trusted — leaving for manual merge."
             fi
           elif [[ -z "$VERDICT" ]]; then
-            disarm "No REVIEW_RESULT line in the review"
+            echo "No REVIEW_RESULT line in the review — failing closed."
             exit 1
           else
-            disarm "Changes needed"
+            echo "Changes needed."
           fi
