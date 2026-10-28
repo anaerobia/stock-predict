@@ -23,6 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Claude review
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -46,17 +47,27 @@ jobs:
             REVIEW_RESULT: CHANGES_NEEDED
 
       - name: Post review comment and decide
+        # Run even if the review step failed, so a failed review still disarms auto-merge.
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           AUTO_MERGE_ENABLED: ${{ vars.AUTO_MERGE_ENABLED }}
           AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
         run: |
           set -euo pipefail
 
-          RESULT_FILE="/home/runner/work/_temp/claude-execution-output.json"
+          # Anything other than an explicit APPROVE must disarm auto-merge, so a
+          # previous approval can't merge a PR whose latest review failed.
+          disarm() {
+            echo "$1 — disarming any existing auto-merge on this PR."
+            gh pr merge "$PR_NUMBER" --disable-auto || true
+          }
+
+          RESULT_FILE="${EXECUTION_FILE:-/home/runner/work/_temp/claude-execution-output.json}"
           if [ ! -f "$RESULT_FILE" ]; then
-            echo "No Claude output file found at $RESULT_FILE — failing closed."
+            disarm "No Claude output file found at $RESULT_FILE"
             exit 1
           fi
 
@@ -66,13 +77,14 @@ jobs:
             if type == "array" then (map(select(.type == "result")) | last | .result)
             else .result end // empty' "$RESULT_FILE")
           if [ -z "$REVIEW_TEXT" ]; then
-            echo "Empty review text — failing closed."
+            disarm "Empty review text"
             exit 1
           fi
 
           gh pr comment "$PR_NUMBER" --body "$REVIEW_TEXT"
 
-          VERDICT=$(printf '%s\n' "$REVIEW_TEXT" | grep -E '^REVIEW_RESULT: (APPROVE|CHANGES_NEEDED)$' | tail -n1)
+          # `|| true`: no verdict line makes grep fail, which must not end the script before disarm.
+          VERDICT=$(printf '%s\n' "$REVIEW_TEXT" | grep -E '^REVIEW_RESULT: (APPROVE|CHANGES_NEEDED)$' | tail -n1 || true)
 
           if [[ "$VERDICT" == "REVIEW_RESULT: APPROVE" ]]; then
             if [[ "$AUTO_MERGE_ENABLED" == "true" && "$AUTHOR_ASSOCIATION" =~ ^(OWNER|MEMBER|COLLABORATOR)$ ]]; then
@@ -83,7 +95,9 @@ jobs:
             else
               echo "Approved by review, but auto-merge is off or author isn't trusted — leaving for manual merge."
             fi
+          elif [[ -z "$VERDICT" ]]; then
+            disarm "No REVIEW_RESULT line in the review"
+            exit 1
           else
-            echo "Changes needed — disarming any existing auto-merge on this PR."
-            gh pr merge "$PR_NUMBER" --disable-auto || true
+            disarm "Changes needed"
           fi
